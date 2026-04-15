@@ -1,12 +1,12 @@
 # AGENTS.md
 
-本文件面向在本仓库中协作的开发者与 Coding Agent，目的是快速说明项目边界、运行方式和改动约束，避免偏离 MVP 定位。
+本文件面向在本仓库中协作的开发者与 Coding Agent，目的是快速说明项目边界、运行方式和改动约束，避免偏离当前项目主线并出现过度设计。
 
 ## 1. 项目定位
 
 `Personal Digest Agent` 是一个单用户、单机常驻的极简信息聚合与摘要工具，不是 RSS Reader 产品，也不是多用户平台。
 
-当前 MVP 只关注这条闭环：
+当前主线仍聚焦这条基础闭环：
 
 `RSS / RSSHub 拉取 -> 去重入库 -> 正文提取 -> LLM 摘要分类评分 -> Digest 生成 -> Email 发送`
 
@@ -86,7 +86,7 @@
 
 支持 `${ENV_NAME}` 形式的环境变量替换。
 
-### 4.3 敏感配置约束
+### 4.2 敏感配置与环境变量约束
 
 以下内容必须通过环境变量注入，不应直接写入仓库文件：
 
@@ -108,9 +108,11 @@
 
 其中 `SMTP_RECIPIENTS` 支持逗号分隔多个邮箱地址。
 
+在 Windows 上，如果刚新增或修改了用户级环境变量，需要重开终端或重启 Codex App。否则当前进程可能看不到最新值。
+
 如果敏感值曾被写入仓库文件或提交历史，应视为已泄露并尽快轮换。
 
-### 4.2 `config/sources.yaml`
+### 4.3 `config/sources.yaml`
 
 这里是来源与偏好的真实源，不要把来源管理逻辑再做一套数据库 UI。
 
@@ -182,6 +184,15 @@ personal-digest serve
 pytest
 ```
 
+接手排查建议顺序：
+
+1. 确认环境变量在当前进程可见
+2. 运行 `pytest`
+3. 执行 `personal-digest init-db`
+4. 执行 `personal-digest sync-sources`
+5. 执行 `personal-digest poll`
+6. 需要验证发信时再执行 `personal-digest digest --send`
+
 ## 6. 开发约束
 
 ### 6.1 代码原则
@@ -194,7 +205,7 @@ pytest
 
 ### 6.2 架构边界
 
-- 不要把 CLI MVP 直接扩成 Web API，除非需求明确发生变化。
+- 不要把当前 CLI 主线直接扩成 Web API，除非需求明确发生变化。
 - 新增外部能力时，优先通过已有端口模式扩展：
   - `FeedProvider`
   - `ContentExtractor`
@@ -223,4 +234,4 @@ pytest
 - `run-once` 主链路仍保持可达。
 - 新增依赖已写入 `pyproject.toml`。
 - 新增文档没有与 `README.md` / `AGENTS.md` 冲突。
-- 未引入与 MVP 定位不匹配的过度设计。
+- 未引入与当前单机 CLI / SQLite 主线不匹配的过度设计。

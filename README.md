@@ -2,7 +2,7 @@
 
 `Personal Digest Agent` 是一个单用户、单机常驻的极简信息聚合与摘要工具。
 
-## MVP 能力
+## 当前能力
 
 - 从 `RSS / Atom / RSSHub` 拉取来源
 - 对新增文章去重入库
@@ -60,6 +60,8 @@ pip install -e .[dev]
 
 敏感信息不要直接写入仓库配置文件。`config/settings.yaml` 应保持占位符形式，由环境变量在运行时注入。
 
+如果你是在 Windows 上刚新增或修改了用户级环境变量，记得重开终端或重启 Codex App。否则当前进程可能仍然读不到最新值。
+
 3. 初始化数据库：
 
 ```bash
@@ -86,6 +88,24 @@ personal-digest serve
 - `personal-digest digest --send`
 - `personal-digest run-once`
 - `personal-digest serve`
+
+## 已验证运行事实
+
+- 当前已验证的 Gmail SMTP 发送方式为 `smtp.gmail.com:465 + SSL`
+- 在当前环境中，`587 + STARTTLS` 不建议作为默认验证路径
+- 某些站点文章页会返回 `403/4xx`，系统会自动降级为 `feed summary`，这属于预期行为
+- 首次接入来源时会受 `app.initial_fetch_entry_limit` 限制，避免一次性回填过多历史文章
+
+## 接手建议
+
+如果是新开发者或在新对话中继续推进，建议先按这个顺序确认当前状态：
+
+1. 确认环境变量已在当前进程生效
+2. 运行 `pytest`
+3. 执行 `personal-digest init-db`
+4. 执行 `personal-digest sync-sources`
+5. 执行 `personal-digest poll`
+6. 需要验证发信时再执行 `personal-digest digest --send`
 
 ## 协作说明
 
