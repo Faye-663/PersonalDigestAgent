@@ -58,7 +58,10 @@ def create_application(config_dir: Path) -> Application:
         poll_feeds_use_case=PollFeedsUseCase(
             source_repository=source_repository,
             article_repository=article_repository,
-            feed_provider=FeedparserFeedProvider(app_settings.user_agent),
+            feed_provider=FeedparserFeedProvider(
+                user_agent=app_settings.user_agent,
+                initial_fetch_entry_limit=app_settings.initial_fetch_entry_limit,
+            ),
             logger=logger,
         ),
         extract_pending_articles_use_case=ExtractPendingArticlesUseCase(
@@ -73,6 +76,7 @@ def create_application(config_dir: Path) -> Application:
             llm_provider=OpenAICompatibleLLMProvider(app_settings.llm),
             preferences=sources_settings.preferences,
             logger=logger,
+            llm_enabled=app_settings.llm.enabled,
         ),
         build_daily_digest_use_case=BuildDailyDigestUseCase(
             article_repository=article_repository,

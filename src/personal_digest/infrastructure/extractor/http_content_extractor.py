@@ -18,7 +18,19 @@ class HttpContentExtractor(ContentExtractor):
     timeout_seconds: int = 20
 
     def extract(self, url: str, feed_summary: str | None) -> ExtractedContent:
-        html = self._fetch_html(url)
+        try:
+            html = self._fetch_html(url)
+        except httpx.HTTPStatusError as exc:
+            status_code = exc.response.status_code
+            if 400 <= status_code < 500 and feed_summary:
+                # 文章页被站点拦截时，优先保住 digest 主链路，而不是把整条记录打成失败。
+                return ExtractedContent(
+                    clean_content=feed_summary.strip(),
+                    metadata={"http_status": str(status_code)},
+                    fallback_used="feed_summary_http_4xx",
+                    raw_html=None,
+                )
+            raise
         return self._extract_from_html(html, feed_summary)
 
     def _fetch_html(self, url: str) -> str:

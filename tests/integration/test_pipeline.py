@@ -248,8 +248,22 @@ preferences:
 def test_analyze_use_case_degrades_when_llm_fails(tmp_path: Path) -> None:
     database = SQLiteDatabase(tmp_path / "digest.db")
     database.initialize()
+    source_repository = SQLiteFeedSourceRepository(database)
     article_repository = SQLiteArticleRepository(database)
     analysis_repository = SQLiteAnalysisRepository(database)
+
+    source_repository.upsert_sources(
+        [
+            FeedSource(
+                id="source-a",
+                name="Source A",
+                type="rss",
+                feed_url="https://example.com/feed.xml",
+                enabled=True,
+                fetch_interval_minutes=30,
+            )
+        ]
+    )
 
     article = article_repository.create(
         Article(
@@ -278,6 +292,57 @@ def test_analyze_use_case_degrades_when_llm_fails(tmp_path: Path) -> None:
     assert analysis is not None
     assert analysis.category == "未分类"
     assert analysis.score == 40
+
+
+def test_analyze_use_case_skips_llm_when_disabled(tmp_path: Path) -> None:
+    database = SQLiteDatabase(tmp_path / "digest.db")
+    database.initialize()
+    source_repository = SQLiteFeedSourceRepository(database)
+    article_repository = SQLiteArticleRepository(database)
+    analysis_repository = SQLiteAnalysisRepository(database)
+
+    source_repository.upsert_sources(
+        [
+            FeedSource(
+                id="source-a",
+                name="Source A",
+                type="rss",
+                feed_url="https://example.com/feed.xml",
+                enabled=True,
+                fetch_interval_minutes=30,
+            )
+        ]
+    )
+
+    article = article_repository.create(
+        Article(
+            source_id="source-a",
+            entry_id="1",
+            title="Skipped Article",
+            url="https://example.com/skipped",
+            normalized_url="https://example.com/skipped",
+            feed_summary="Skipped summary",
+            clean_content="Skipped content",
+            status=ArticleStatus.PENDING_ANALYSIS,
+        )
+    )
+
+    use_case = AnalyzePendingArticlesUseCase(
+        article_repository=article_repository,
+        analysis_repository=analysis_repository,
+        llm_provider=FakeLLMProvider({}, failing_titles={"Skipped Article"}),
+        preferences=PreferenceConfig(min_score=60),
+        logger=_noop_logger(),
+        llm_enabled=False,
+    )
+
+    processed = use_case.execute()
+    analysis = analysis_repository.get_by_article_id(article.id or 0)
+
+    assert processed == 1
+    assert analysis is not None
+    assert analysis.summary == "Skipped summary"
+    assert analysis.score == 60
 
 
 def test_source_repository_marks_removed_sources_disabled_and_honors_due_interval(tmp_path: Path) -> None:

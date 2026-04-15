@@ -4,7 +4,7 @@ from personal_digest.settings import LLMSettings
 
 def test_llm_provider_parses_json_code_block() -> None:
     provider = OpenAICompatibleLLMProvider(
-        LLMSettings(base_url="https://example.com/v1", api_key="token", model="test-model")
+        LLMSettings(enabled=True, base_url="https://example.com/v1", api_key="token", model="test-model")
     )
 
     result = provider._parse_analysis_content(
@@ -17,4 +17,3 @@ def test_llm_provider_parses_json_code_block() -> None:
     assert result.category == "AI"
     assert result.tags == ["agent", "rss"]
     assert result.score == 88
-

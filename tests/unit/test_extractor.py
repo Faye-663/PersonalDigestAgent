@@ -1,3 +1,5 @@
+import httpx
+
 from personal_digest.infrastructure.extractor.http_content_extractor import HttpContentExtractor
 
 
@@ -47,3 +49,19 @@ def test_extractor_falls_back_to_feed_summary(monkeypatch) -> None:
     assert result.fallback_used == "feed_summary"
     assert result.clean_content == "feed summary text"
 
+
+def test_extractor_uses_feed_summary_on_http_403(monkeypatch) -> None:
+    extractor = HttpContentExtractor(user_agent="test-agent")
+    request = httpx.Request("GET", "https://example.com/blocked")
+    response = httpx.Response(403, request=request)
+
+    def raise_http_status(_: str) -> str:
+        raise httpx.HTTPStatusError("403", request=request, response=response)
+
+    monkeypatch.setattr(extractor, "_fetch_html", raise_http_status)
+
+    result = extractor.extract("https://example.com/blocked", "feed summary text")
+
+    assert result.fallback_used == "feed_summary_http_4xx"
+    assert result.clean_content == "feed summary text"
+    assert result.metadata == {"http_status": "403"}

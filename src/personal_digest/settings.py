@@ -20,6 +20,7 @@ class EmailSettings:
 
 @dataclass(slots=True)
 class LLMSettings:
+    enabled: bool
     base_url: str
     api_key: str
     model: str
@@ -34,6 +35,7 @@ class AppSettings:
     debug_store_raw_html: bool
     user_agent: str
     poll_interval_minutes: int
+    initial_fetch_entry_limit: int
     llm: LLMSettings
     email: EmailSettings
 
@@ -65,4 +67,3 @@ class PreferenceConfig:
 class SourcesSettings:
     sources: list[FeedSourceConfig]
     preferences: PreferenceConfig
-

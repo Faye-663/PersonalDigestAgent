@@ -76,13 +76,39 @@
 - `app.database_path`
 - `app.debug_store_raw_html`
 - `app.user_agent`
+- `app.initial_fetch_entry_limit`
 - `scheduler.poll_interval_minutes`
 - `llm.base_url`
+- `llm.enabled`
 - `llm.api_key`
 - `llm.model`
 - `notification.email.*`
 
 支持 `${ENV_NAME}` 形式的环境变量替换。
+
+### 4.3 敏感配置约束
+
+以下内容必须通过环境变量注入，不应直接写入仓库文件：
+
+- `LLM_API_KEY`
+- `SMTP_USERNAME`
+- `SMTP_PASSWORD`
+- `SMTP_SENDER`
+- `SMTP_RECIPIENTS`
+
+推荐的环境变量名称：
+
+- `LLM_BASE_URL`
+- `LLM_API_KEY`
+- `LLM_MODEL`
+- `SMTP_USERNAME`
+- `SMTP_PASSWORD`
+- `SMTP_SENDER`
+- `SMTP_RECIPIENTS`
+
+其中 `SMTP_RECIPIENTS` 支持逗号分隔多个邮箱地址。
+
+如果敏感值曾被写入仓库文件或提交历史，应视为已泄露并尽快轮换。
 
 ### 4.2 `config/sources.yaml`
 
@@ -198,4 +224,3 @@ pytest
 - 新增依赖已写入 `pyproject.toml`。
 - 新增文档没有与 `README.md` / `AGENTS.md` 冲突。
 - 未引入与 MVP 定位不匹配的过度设计。
-

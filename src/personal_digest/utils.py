@@ -42,7 +42,9 @@ def load_app_settings(config_dir: Path) -> AppSettings:
         debug_store_raw_html=bool(app.get("debug_store_raw_html", False)),
         user_agent=app.get("user_agent", "PersonalDigestAgent/0.1"),
         poll_interval_minutes=int(scheduler.get("poll_interval_minutes", 5)),
+        initial_fetch_entry_limit=int(app.get("initial_fetch_entry_limit", 50)),
         llm=LLMSettings(
+            enabled=bool(llm.get("enabled", True)),
             base_url=llm.get("base_url", "https://api.openai.com/v1"),
             api_key=llm.get("api_key", ""),
             model=llm.get("model", "gpt-4o-mini"),
@@ -55,7 +57,7 @@ def load_app_settings(config_dir: Path) -> AppSettings:
             username=notification.get("username", ""),
             password=notification.get("password", ""),
             sender=notification.get("sender", ""),
-            recipients=list(notification.get("recipients", [])),
+            recipients=parse_recipients(notification.get("recipients", [])),
             use_tls=bool(notification.get("use_tls", True)),
             use_ssl=bool(notification.get("use_ssl", False)),
             subject_prefix=notification.get("subject_prefix", "[Personal Digest]"),
@@ -98,6 +100,22 @@ def parse_time(value: str) -> time:
     return time(hour=int(hour), minute=int(minute))
 
 
+def parse_recipients(value: str | list[str] | None) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        candidates = [value]
+    else:
+        candidates = list(value)
+
+    recipients: list[str] = []
+    for candidate in candidates:
+        if not candidate:
+            continue
+        recipients.extend(item.strip() for item in str(candidate).split(",") if item.strip())
+    return recipients
+
+
 def utc_now() -> datetime:
     return datetime.now(UTC)
 
@@ -138,4 +156,3 @@ def normalize_url(url: str) -> str:
 def content_hash(text: str) -> str:
     normalized = " ".join(text.split()).strip()
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
-

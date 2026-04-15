@@ -19,7 +19,6 @@ preferences:
   source_weights:
     openai-blog: 1.2
   digest_max_items: 8
-  min_score: 60
+  min_score: 40
   digest_send_time: "08:00"
   category_whitelist: []
-

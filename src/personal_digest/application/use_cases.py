@@ -166,6 +166,7 @@ class AnalyzePendingArticlesUseCase:
     llm_provider: LLMProvider
     preferences: PreferenceConfig
     logger: logging.Logger
+    llm_enabled: bool = True
 
     def execute(self, limit: int | None = None) -> int:
         processed = 0
@@ -177,25 +178,42 @@ class AnalyzePendingArticlesUseCase:
         }
         for article in self.article_repository.list_by_status(ArticleStatus.PENDING_ANALYSIS.value, limit=limit):
             started = perf_counter()
-            try:
-                result = self.llm_provider.analyze(article, preference_payload)
-            except Exception as exc:  # noqa: BLE001
-                self.logger.warning(
-                    "LLM analyze failed, fallback to title-only analysis",
+            if not self.llm_enabled:
+                result = AnalysisResult(
+                    summary=(article.feed_summary or article.title or "")[:280] or "当前配置已跳过模型生成，本条仅保留标题。",
+                    category="未分类",
+                    tags=[],
+                    score=self.preferences.min_score,
+                )
+                self.logger.info(
+                    "LLM generation skipped by configuration",
                     extra={
                         "article_id": str(article.id or "-"),
                         "source_id": article.source_id,
                         "stage": "analyze",
-                        "status": "degraded",
-                        "error": str(exc),
+                        "status": "skipped",
                     },
                 )
-                result = AnalysisResult(
-                    summary=(article.feed_summary or article.title or "")[:280] or "LLM 调用失败，本条仅保留标题。",
-                    category="未分类",
-                    tags=[],
-                    score=max(0, self.preferences.min_score - 20),
-                )
+            else:
+                try:
+                    result = self.llm_provider.analyze(article, preference_payload)
+                except Exception as exc:  # noqa: BLE001
+                    self.logger.warning(
+                        "LLM analyze failed, fallback to title-only analysis",
+                        extra={
+                            "article_id": str(article.id or "-"),
+                            "source_id": article.source_id,
+                            "stage": "analyze",
+                            "status": "degraded",
+                            "error": str(exc),
+                        },
+                    )
+                    result = AnalysisResult(
+                        summary=(article.feed_summary or article.title or "")[:280] or "LLM 调用失败，本条仅保留标题。",
+                        category="未分类",
+                        tags=[],
+                        score=max(0, self.preferences.min_score - 20),
+                    )
             analysis = ArticleAnalysis(
                 article_id=article.id or 0,
                 summary=result.summary,
@@ -290,4 +308,3 @@ def _digest_window(digest_date: date, timezone_name: str) -> tuple[datetime, dat
     local_start = datetime.combine(digest_date, time.min, tzinfo=tz)
     local_end = datetime.combine(digest_date, time.max, tzinfo=tz)
     return local_start.astimezone(UTC), local_end.astimezone(UTC)
-

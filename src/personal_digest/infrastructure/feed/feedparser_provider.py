@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import calendar
 from datetime import UTC, datetime
+from dataclasses import dataclass
 
 import feedparser
 
@@ -10,9 +11,10 @@ from personal_digest.domain.models import FeedEntry, FeedSource
 from personal_digest.domain.ports import FeedProvider
 
 
+@dataclass(slots=True)
 class FeedparserFeedProvider(FeedProvider):
-    def __init__(self, user_agent: str) -> None:
-        self.user_agent = user_agent
+    user_agent: str
+    initial_fetch_entry_limit: int = 50
 
     def fetch(self, source: FeedSource) -> list[FeedEntry]:
         headers = {"User-Agent": self.user_agent, **source.headers}
@@ -35,6 +37,10 @@ class FeedparserFeedProvider(FeedProvider):
                     raw_metadata=dict(item),
                 )
             )
+        if source.last_fetched_at is None and self.initial_fetch_entry_limit > 0:
+            # 首次接入只取最近一小批，避免一次性回填数百篇历史文章拖垮首轮验证。
+            entries.sort(key=lambda entry: entry.published_at.timestamp() if entry.published_at else float("-inf"), reverse=True)
+            return entries[: self.initial_fetch_entry_limit]
         return entries
 
 
@@ -44,4 +50,3 @@ def _parse_entry_datetime(item: dict) -> datetime | None:
         return None
     timestamp = calendar.timegm(parsed)
     return datetime.fromtimestamp(timestamp, tz=UTC)
-

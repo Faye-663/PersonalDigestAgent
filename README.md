@@ -49,7 +49,16 @@ pip install -e .[dev]
 
 - `config/settings.yaml`
 - `config/sources.yaml`
-- 环境变量 `OPENAI_API_KEY`、`SMTP_USERNAME`、`SMTP_PASSWORD`
+- 设置环境变量：
+  - `LLM_BASE_URL`
+  - `LLM_API_KEY`
+  - `LLM_MODEL`
+  - `SMTP_USERNAME`
+  - `SMTP_PASSWORD`
+  - `SMTP_SENDER`
+  - `SMTP_RECIPIENTS`，多个收件人使用逗号分隔
+
+敏感信息不要直接写入仓库配置文件。`config/settings.yaml` 应保持占位符形式，由环境变量在运行时注入。
 
 3. 初始化数据库：
 
@@ -81,3 +90,7 @@ personal-digest serve
 ## 协作说明
 
 更详细的仓库协作说明、架构边界和改动约束见 [AGENTS.md](AGENTS.md)。
+
+## 项目进度
+
+当前项目阶段、已完成进度与生命周期管理建议见 [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md)。
