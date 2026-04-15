@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "personal-digest-agent"
+version = "0.1.0"
+description = "A minimal personal digest pipeline for feed aggregation, summarization, and email delivery."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "APScheduler>=3.10,<4.0",
+  "feedparser>=6.0.11,<7.0",
+  "httpx>=0.27,<1.0",
+  "Jinja2>=3.1,<4.0",
+  "markdown>=3.6,<4.0",
+  "PyYAML>=6.0.1,<7.0",
+  "readability-lxml>=0.8.1,<1.0",
+  "trafilatura>=1.9,<2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2,<9.0",
+]
+
+[project.scripts]
+personal-digest = "personal_digest.interfaces.cli.main:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

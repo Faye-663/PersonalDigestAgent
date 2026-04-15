@@ -1,0 +1,25 @@
+sources:
+  - id: openai-blog
+    name: OpenAI Blog
+    type: rss
+    feed_url: https://openai.com/blog/rss.xml
+    enabled: true
+    fetch_interval_minutes: 30
+    headers: {}
+    cookies: {}
+
+preferences:
+  topics:
+    - AI
+    - agents
+    - engineering
+  excluded_topics:
+    - celebrity
+    - gossip
+  source_weights:
+    openai-blog: 1.2
+  digest_max_items: 8
+  min_score: 60
+  digest_send_time: "08:00"
+  category_whitelist: []
+

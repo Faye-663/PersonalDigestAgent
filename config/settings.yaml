@@ -1,0 +1,29 @@
+app:
+  timezone: Asia/Shanghai
+  database_path: data/personal_digest.db
+  debug_store_raw_html: false
+  user_agent: PersonalDigestAgent/0.1
+
+scheduler:
+  poll_interval_minutes: 5
+
+llm:
+  base_url: https://api.openai.com/v1
+  api_key: ${OPENAI_API_KEY}
+  model: gpt-4o-mini
+  timeout_seconds: 60
+  temperature: 0.2
+
+notification:
+  email:
+    host: smtp.example.com
+    port: 587
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    sender: digest@example.com
+    recipients:
+      - you@example.com
+    use_tls: true
+    use_ssl: false
+    subject_prefix: "[Personal Digest]"
+
